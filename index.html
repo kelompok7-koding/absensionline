@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Online - SMAN 1 Dramaga</title>
+    <!-- Memuat Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Memuat font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ikon (Heroicons) -->
+    <script src="https://unpkg.com/heroicons@2.1.1/dist/solid.js" defer></script>
+
+    <style>
+        /* Menggunakan font Inter sebagai default */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Sembunyikan elemen yang tidak ingin dicetak */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .print-container {
+                padding: 2rem;
+                border: none;
+                box-shadow: none;
+            }
+            #attendanceTablePrint {
+                display: block !important;
+            }
+            #guruPageContainer, #sekretarisPageContainer {
+                display: none !important;
+            }
+        }
+
+        /* Tampilan custom untuk print */
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Kontainer Aplikasi Utama -->
+    <div id="appContainer">
+
+        <!-- ====================================================== -->
+        <!--                      HALAMAN LOGIN                     -->
+        <!-- ====================================================== -->
+        <div id="loginPage" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 p-4">
+            <div class="bg-white w-full max-w-md p-8 rounded-2xl shadow-2xl text-center">
+                <h1 class="text-3xl font-extrabold text-blue-700 mb-2">SMA NEGERI 1 DRAMAGA</h1>
+                <p class="text-gray-600 mb-8 text-lg">Aplikasi Absensi Online</p>
+
+                <div class="space-y-6">
+                    <!-- Pemilihan Peran -->
+                    <div>
+                        <label for="roleSelect" class="block text-left text-sm font-medium text-gray-700 mb-1">Pilih Peran Anda</label>
+                        <select id="roleSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="siswa">Siswa</option>
+                            <option value="admin">Admin</option>
+                            <option value="guru">Guru (Wali Kelas)</option>
+                            <option value="sekretaris">Sekretaris Kelas</option>
+                        </select>
+                    </div>
+
+                    <!-- Input Password (untuk Admin, Guru, Sekretaris) -->
+                    <div id="passwordContainer" class="hidden">
+                        <label for="passwordInput" class="block text-left text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="passwordInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukkan password...">
+                    </div>
+
+                    <!-- Pemilihan Nama Siswa (untuk Siswa) -->
+                    <div id="studentSelectContainer">
+                        <label for="studentSelect" class="block text-left text-sm font-medium text-gray-700 mb-1">Pilih Nama Anda</Tlabel>
+                        <select id="studentSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Pilih Nama --</option>
+                            <!-- Nama siswa akan diisi oleh JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Tombol Login -->
+                    <button id="loginButton" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-lg shadow-lg hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Masuk
+                    </button>
+
+                    <!-- Pesan Error -->
+                    <p id="loginError" class="text-red-500 text-sm hidden"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================== -->
+        <!--                      HALAMAN ADMIN                     -->
+        <!-- ====================================================== -->
+        <div id="adminPage" class="hidden min-h-screen bg-gray-50">
+            <!-- Header Admin -->
+            <header class="bg-white shadow-md no-print">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-gray-800">Dashboard Admin</h1>
+                    <button id="adminLogoutButton" class="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition">Logout</button>
+                </div>
+            </header>
+            
+            <!-- Konten Admin -->
+            <main class="max-w-7xl mx-auto p-6 space-y-8">
+                <!-- Kelola Siswa -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold mb-4">Kelola Siswa (X-C)</h2>
+                    <div class="flex gap-4 mb-4">
+                        <input type="text" id="adminStudentNameInput" class="flex-grow px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama Siswa Baru...">
+                        <button id="adminAddStudentButton" class="bg-blue-500 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-600">Tambah</button>
+                    </div>
+                    <ul id="adminStudentList" class="list-decimal list-inside space-y-2 max-h-60 overflow-y-auto">
+                        <!-- Daftar siswa akan diisi oleh JavaScript -->
+                    </ul>
+                </div>
+
+                <!-- Kelola Guru -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold mb-4">Kelola Guru</h2>
+                    <div class="flex gap-4 mb-4">
+                        <input type="text" id="adminTeacherNameInput" class="flex-grow px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama Guru Baru...">
+                        <button id="adminAddTeacherButton" class="bg-blue-500 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-600">Tambah</button>
+                    </div>
+                    <ul id="adminTeacherList" class="list-disc list-inside space-y-2">
+                        <!-- Daftar guru akan diisi oleh JavaScript -->
+                    </ul>
+                </div>
+
+                <!-- Kelola Sekretaris -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold mb-4">Kelola Sekretaris</h2>
+                    <div class="flex gap-4 mb-4">
+                        <input type="text" id="adminSecretaryNameInput" class="flex-grow px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama Sekretaris Baru...">
+                        <!-- Di masa depan, bisa tambahkan pilihan kelas di sini -->
+                        <button id="adminAddSecretaryButton" class="bg-blue-500 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-600">Tambah</button>
+                    </div>
+                    <ul id="adminSecretaryList" class="list-disc list-inside space-y-2">
+                        <!-- Daftar sekretaris akan diisi oleh JavaScript -->
+                    </ul>
+                </div>
+            </main>
+        </div>
+
+        <!-- ====================================================== -->
+        <!--                HALAMAN GURU & SEKRETARIS               -->
+        <!-- ====================================================== -->
+        <div id="teacherPage" class="hidden min-h-screen bg-gray-50">
+            <!-- Header Guru/Sekretaris -->
+            <header class="bg-white shadow-md no-print">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                    <h1 id="teacherHeaderTitle" class="text-2xl font-bold text-gray-800">Dashboard Guru</h1>
+                    <button id="teacherLogoutButton" class="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition">Logout</button>
+                </div>
+            </header>
+            
+            <!-- Konten Guru/Sekretaris -->
+            <main id="guruPageContainer" class="max-w-7xl mx-auto p-6 space-y-6 no-print">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                            <h2 class="text-xl font-semibold">Absensi Kelas X-C</h2>
+                            <p class="text-gray-600">Wali Kelas: <span id="waliKelasName">Damis Dewi Sundani, M.pd.</span></p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label for="attendanceDate" class="font-medium">Tanggal:</label>
+                            <input type="date" id="attendanceDate" class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button id="printReportButton" class="hidden bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600">
+                                Kirim/Cetak Laporan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabel Absensi -->
+                <div class="bg-white p-6 rounded-lg shadow overflow-x-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Daftar Hadir Siswa</h3>
+                        <button id="saveAttendanceButton" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu Absen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Baris absensi akan diisi oleh JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+            
+            <!-- Container Khusus untuk Cetak -->
+            <div id="attendanceTablePrint" class="hidden print-container">
+                <h1 class="text-2xl font-bold text-center mb-2">Laporan Absensi SMA NEGERI 1 DRAMAGA</h1>
+                <h2 class="text-xl font-semibold text-center mb-4">Kelas: X-C</h2>
+                <div class="flex justify-between mb-4">
+                    <p><strong>Wali Kelas:</strong> Damis Dewi Sundani, M.pd.</p>
+                    <p><strong>Tanggal:</strong> <span id="printDate"></span></p>
+                </div>
+                <table class="min-w-full divide-y divide-gray-300 border border-gray-300">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700 border">No.</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700 border">Nama Siswa</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700 border">Status</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700 border">Waktu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTablePrintBody" class="divide-y divide-gray-200">
+                        <!-- Diisi oleh JS saat mencetak -->
+                    </tbody>
+                </table>
+                <div class="mt-8">
+                    <p class="text-sm">Dicetak pada: <span id="printTimestamp"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================== -->
+        <!--                      HALAMAN SISWA                     -->
+        <!-- ====================================================== -->
+        <div id="siswaPage" class="hidden flex items-center justify-center min-h-screen bg-gray-100 p-4">
+            <div class="bg-white w-full max-w-lg p-10 rounded-2xl shadow-xl text-center">
+                <button id="siswaLogoutButton" class="absolute top-6 right-6 bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-200 transition text-sm no-print">Logout</button>
+                
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Selamat Datang,</h1>
+                <p id="siswaNameDisplay" class="text-2xl font-semibold text-blue-600 mb-8"></p>
+
+                <div id="siswaLoading" class="hidden">
+                    <p class="text-gray-600">Memeriksa status absensi...</p>
+                </div>
+
+                <div id="siswaAttendButtonContainer" class="hidden">
+                    <p class="text-gray-600 mb-6 text-lg">Silakan lakukan absensi untuk hari ini.</p>
+                    <button id="siswaAttendButton" class="w-full bg-green-500 text-white py-6 rounded-lg font-bold text-2xl shadow-lg hover:bg-green-600 transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        KLIK UNTUK HADIR
+                    </button>
+                </div>
+
+                <div id="siswaAttendedContainer" class="hidden">
+                    <p class="text-xl font-medium text-green-700 mb-4">Anda sudah berhasil absen!</p>
+                    <p class="text-gray-700">Waktu Absen:</p>
+                    <p id="siswaTimestampDisplay" class="text-lg font-semibold text-gray-900"></p>
+                </div>
+
+                <div class="mt-10 pt-6 border-t border-gray-200">
+                    <p class="text-gray-600">Jika <span class="font-semibold">Sakit</span> atau <span class="font-semibold">Izin</span>, harap segera hubungi Sekretaris Kelas atau Wali Kelas Anda.</p>
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- Akhir AppContainer -->
+
+    <!-- ====================================================== -->
+    <!--                     SKRIP JAVASCRIPT                   -->
+    <!-- ====================================================== -->
+    <script type="module">
+        // Impor fungsi-fungsi Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            setDoc, 
+            onSnapshot, 
+            updateDoc,
+            arrayUnion,
+            arrayRemove,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Konfigurasi Firebase ---
+        // (Gunakan config yang disediakan oleh environment)
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'absensi-smandramaga-default';
+        
+        // Inisialisasi Firebase
+        let app, db, auth;
+        let userId = null;
+        let currentRole = null;
+        let currentStudentName = null;
+        let attendanceUnsubscribe = null; // Untuk listener realtime
+        let adminListsUnsubscribe = {}; // Untuk listener admin
+
+        // --- Data Awal (Hardcoded) ---
+        const INITIAL_STUDENT_LIST_XC = [
+            "Abi Toriq Makatita", "Addini Urwah Hanifah", "Ahmad Zaky", "Aira Dwi Cahyani", 
+            "Allysa Putri Abimanyu", "Anela Agustin", "Arya Galih", "Asyila Nayla Nazwa",
+            "Bintang Fidelya Rafa Azzahra", "Cleotasya Aurora Kristianto Putri", "Daffa Almer Yofa",
+            "Elsa Zullia", "Erlangga Saputra", "Febby Adinda Putri", "Febriansyah", 
+            "Ghina Nurani Suryansyah", "Haya Diya Syaima", "Jihan Navasyah Mahadi",
+            "Kayla Raimanda Almiratuzahwa", "Khalisa Khansa Ramadaniyah", "Labieb Kamil Al-Fakhry",
+            "Mahdian Ningsih", "Mohamad Rizki", "Muhammad Fazri Ramadhan", "Muhammad Rizki Abqhary",
+            "Muhammad Alif Al Faruq", "Muhammad Faris Qurthubi", "Muhammad Naufal Munadil Fazri",
+            "Muhammad Tian Arizki", "Mutia Larasati", "Nahdatussyakila Al-Amsir", 
+            "Nazreen Ananda Saliha", "Niken Felysha Andrean", "Panya Azura", "Raden Indra Bayu Hartono",
+            "Ratu Fatimah Az Zahra", "Raya Falah Dewantara", "Rinanti Putri", "Salwa Nurul Aini",
+            "Satria Dwi Andika", "Shakira Aisyah Putri", "Siti Huzaimah", "Sonya Maryam Azzahra",
+            "Syra Nur Hidayah", "Vira Yusrin Aulia", "Wahid Maulana Fahmi", "Zahra Khumaira"
+        ];
+        const INITIAL_TEACHERS = ["Damis Dewi Sundani, M.pd."];
+        const INITIAL_SECRETARIES = ["Allysa Putri Abimanyu", "Ghina Nurani Suryansyah"];
+        const CLASS_NAME = "X-C";
+        const WALI_KELAS = "Damis Dewi Sundani, M.pd.";
+
+        // --- Elemen DOM ---
+        const loginPage = document.getElementById('loginPage');
+        const adminPage = document.getElementById('adminPage');
+        const teacherPage = document.getElementById('teacherPage');
+        const siswaPage = document.getElementById('siswaPage');
+
+        const roleSelect = document.getElementById('roleSelect');
+        const passwordContainer = document.getElementById('passwordContainer');
+        const passwordInput = document.getElementById('passwordInput');
+        const studentSelectContainer = document.getElementById('studentSelectContainer');
+        const studentSelect = document.getElementById('studentSelect');
+        const loginButton = document.getElementById('loginButton');
+        const loginError = document.getElementById('loginError');
+
+        // Tombol Logout
+        const adminLogoutButton = document.getElementById('adminLogoutButton');
+        const teacherLogoutButton = document.getElementById('teacherLogoutButton');
+        const siswaLogoutButton = document.getElementById('siswaLogoutButton');
+
+        // Halaman Admin
+        const adminStudentNameInput = document.getElementById('adminStudentNameInput');
+        const adminAddStudentButton = document.getElementById('adminAddStudentButton');
+        const adminStudentList = document.getElementById('adminStudentList');
+        const adminTeacherNameInput = document.getElementById('adminTeacherNameInput');
+        const adminAddTeacherButton = document.getElementById('adminAddTeacherButton');
+        const adminTeacherList = document.getElementById('adminTeacherList');
+        const adminSecretaryNameInput = document.getElementById('adminSecretaryNameInput');
+        const adminAddSecretaryButton = document.getElementById('adminAddSecretaryButton');
+        const adminSecretaryList = document.getElementById('adminSecretaryList');
+
+        // Halaman Guru/Sekretaris
+        const teacherHeaderTitle = document.getElementById('teacherHeaderTitle');
+        const waliKelasName = document.getElementById('waliKelasName');
+        const attendanceDate = document.getElementById('attendanceDate');
+        const saveAttendanceButton = document.getElementById('saveAttendanceButton');
+        const attendanceTableBody = document.getElementById('attendanceTableBody');
+        const printReportButton = document.getElementById('printReportButton');
+
+        // Halaman Siswa
+        const siswaNameDisplay = document.getElementById('siswaNameDisplay');
+        const siswaLoading = document.getElementById('siswaLoading');
+        const siswaAttendButtonContainer = document.getElementById('siswaAttendButtonContainer');
+        const siswaAttendButton = document.getElementById('siswaAttendButton');
+        const siswaAttendedContainer = document.getElementById('siswaAttendedContainer');
+        const siswaTimestampDisplay = document.getElementById('siswaTimestampDisplay');
+
+        // --- Fungsi Utilitas ---
+
+        /**
+         * Menampilkan halaman yang dipilih dan menyembunyikan yang lain
+         * @param {string} pageId - ID halaman yang ingin ditampilkan
+         */
+        function showPage(pageId) {
+            [loginPage, adminPage, teacherPage, siswaPage].forEach(page => {
+                page.classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+        }
+
+        /**
+         * Mendapatkan string tanggal hari ini (YYYY-MM-DD)
+         */
+        function getTodayDateString() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        /**
+         * Mendapatkan timestamp lokal (Indonesia)
+         */
+        function getLocalTimestamp() {
+            return new Date().toLocaleString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        /**
+         * Mengisi pilihan nama siswa di halaman login
+         */
+        function populateStudentLoginSelect(studentNames) {
+            studentSelect.innerHTML = '<option value="">-- Pilih Nama --</option>';
+            studentNames.sort().forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                studentSelect.appendChild(option);
+            });
+        }
+
+        // --- Fungsi Inisialisasi Data (Seed) ---
+
+        /**
+         * Memeriksa dan mengisi data awal (siswa, guru, sekretaris) ke Firestore
+         */
+        async function seedInitialData() {
+            try {
+                // 1. Data Siswa
+                const studentRef = doc(db, 'artifacts', appId, 'public/data/rosters', CLASS_NAME);
+                const studentSnap = await getDoc(studentRef);
+                if (!studentSnap.exists()) {
+                    await setDoc(studentRef, { names: INITIAL_STUDENT_LIST_XC });
+                    console.log('Seed: Data siswa X-C berhasil dibuat.');
+                } else {
+                    // Update daftar siswa di login select dari data Firestore
+                    populateStudentLoginSelect(studentSnap.data().names);
+                }
+
+                // 2. Data Guru
+                const teacherRef = doc(db, 'artifacts', appId, 'public/data/users', 'teachers');
+                const teacherSnap = await getDoc(teacherRef);
+                if (!teacherSnap.exists()) {
+                    await setDoc(teacherRef, { names: INITIAL_TEACHERS });
+                    console.log('Seed: Data guru berhasil dibuat.');
+                }
+
+                // 3. Data Sekretaris
+                const secretaryRef = doc(db, 'artifacts', appId, 'public/data/users', 'secretaries');
+                const secretarySnap = await getDoc(secretaryRef);
+                if (!secretarySnap.exists()) {
+                    await setDoc(secretaryRef, { names: INITIAL_SECRETARIES });
+                    console.log('Seed: Data sekretaris berhasil dibuat.');
+                }
+                
+                // 4. Data Wali Kelas
+                const classInfoRef = doc(db, 'artifacts', appId, 'public/data/rosters', 'classInfo');
+                const classInfoSnap = await getDoc(classInfoRef);
+                if (!classInfoSnap.exists()) {
+                    await setDoc(classInfoRef, { [CLASS_NAME]: WALI_KELAS });
+                    console.log('Seed: Data wali kelas berhasil dibuat.');
+                }
+                
+            } catch (error) {
+                console.error("Error saat seeding data:", error);
+            }
+        }
+
+        // --- Logika Halaman Login ---
+
+        roleSelect.addEventListener('change', () => {
+            const role = roleSelect.value;
+            if (role === 'siswa') {
+                passwordContainer.classList.add('hidden');
+                studentSelectContainer.classList.remove('hidden');
+            } else {
+                passwordContainer.classList.remove('hidden');
+                studentSelectContainer.classList.add('hidden');
+            }
+            passwordInput.value = '';
+            loginError.classList.add('hidden');
+        });
+
+        loginButton.addEventListener('click', () => {
+            const role = roleSelect.value;
+            const password = passwordInput.value;
+            const studentName = studentSelect.value;
+
+            loginError.classList.add('hidden');
+            currentRole = null;
+            currentStudentName = null;
+
+            switch (role) {
+                case 'admin':
+                    if (password === '224') {
+                        currentRole = 'admin';
+                        showPage('adminPage');
+                        loadAdminPage();
+                    } else {
+                        loginError.textContent = 'Password Admin salah.';
+                        loginError.classList.remove('hidden');
+                    }
+                    break;
+                case 'guru':
+                    if (password === '445') {
+                        currentRole = 'guru';
+                        showPage('teacherPage');
+                        loadTeacherPage('guru');
+                    } else {
+                        loginError.textContent = 'Password Guru salah.';
+                        loginError.classList.remove('hidden');
+                    }
+                    break;
+                case 'sekretaris':
+                    if (password === '112') {
+                        currentRole = 'sekretaris';
+                        showPage('teacherPage');
+                        loadTeacherPage('sekretaris');
+                    } else {
+                        loginError.textContent = 'Password Sekretaris salah.';
+                        loginError.classList.remove('hidden');
+                    }
+                    break;
+                case 'siswa':
+                    if (studentName) {
+                        currentRole = 'siswa';
+                        currentStudentName = studentName;
+                        showPage('siswaPage');
+                        loadSiswaPage();
+                    } else {
+                        loginError.textContent = 'Silakan pilih nama Anda.';
+                        loginError.classList.remove('hidden');
+                    }
+                    break;
+            }
+        });
+        
+        // --- Logika Logout ---
+        
+        function handleLogout() {
+            // Hentikan semua listener realtime
+            if (attendanceUnsubscribe) {
+                attendanceUnsubscribe();
+                attendanceUnsubscribe = null;
+            }
+            Object.values(adminListsUnsubscribe).forEach(unsub => unsub());
+            adminListsUnsubscribe = {};
+
+            // Reset state
+            currentRole = null;
+            currentStudentName = null;
+            passwordInput.value = '';
+            studentSelect.value = '';
+            loginError.classList.add('hidden');
+            roleSelect.value = 'siswa';
+            roleSelect.dispatchEvent(new Event('change')); // Trigger event change
+            
+            // Kembali ke halaman login
+            showPage('loginPage');
+        }
+        
+        adminLogoutButton.addEventListener('click', handleLogout);
+        teacherLogoutButton.addEventListener('click', handleLogout);
+        siswaLogoutButton.addEventListener('click', handleLogout);
+
+        // --- Logika Halaman Admin ---
+
+        function loadAdminPage() {
+            // Seed data jika diperlukan
+            seedInitialData();
+            
+            // Hentikan listener lama jika ada
+            if (adminListsUnsubscribe.students) adminListsUnsubscribe.students();
+            if (adminListsUnsubscribe.teachers) adminListsUnsubscribe.teachers();
+            if (adminListsUnsubscribe.secretaries) adminListsUnsubscribe.secretaries();
+
+            // 1. Listen data siswa
+            const studentRef = doc(db, 'artifacts', appId, 'public/data/rosters', CLASS_NAME);
+            adminListsUnsubscribe.students = onSnapshot(studentRef, (docSnap) => {
+                adminStudentList.innerHTML = '';
+                if (docSnap.exists()) {
+                    const students = docSnap.data().names || [];
+                    students.sort().forEach((name, index) => {
+                        const li = document.createElement('li');
+                        li.className = "flex justify-between items-center py-1 pr-2"; // Tambahkan styling
+                        li.innerHTML = `
+                            <span>${index + 1}. ${name}</span>
+                            <button class="delete-btn text-red-500 hover:text-red-700 text-sm font-medium" data-name="${name}" data-type="student">Hapus</button>
+                        `;
+                        adminStudentList.appendChild(li);
+                    });
+                    populateStudentLoginSelect(students); // Update juga login select
+                }
+            });
+
+            // 2. Listen data guru
+            const teacherRef = doc(db, 'artifacts', appId, 'public/data/users', 'teachers');
+            adminListsUnsubscribe.teachers = onSnapshot(teacherRef, (docSnap) => {
+                adminTeacherList.innerHTML = '';
+                if (docSnap.exists()) {
+                    const teachers = docSnap.data().names || [];
+                    teachers.forEach(name => {
+                        const li = document.createElement('li');
+                        li.className = "flex justify-between items-center py-1 pr-2"; // Tambahkan styling
+                        li.innerHTML = `
+                            <span>${name}</span>
+                            <button class="delete-btn text-red-500 hover:text-red-700 text-sm font-medium" data-name="${name}" data-type="teacher">Hapus</button>
+                        `;
+                        adminTeacherList.appendChild(li);
+                    });
+                }
+            });
+            
+            // 3. Listen data sekretaris
+            const secretaryRef = doc(db, 'artifacts', appId, 'public/data/users', 'secretaries');
+            adminListsUnsubscribe.secretaries = onSnapshot(secretaryRef, (docSnap) => {
+                adminSecretaryList.innerHTML = '';
+                if (docSnap.exists()) {
+                    const secretaries = docSnap.data().names || [];
+                    secretaries.forEach(name => {
+                        const li = document.createElement('li');
+                        li.className = "flex justify-between items-center py-1 pr-2"; // Tambahkan styling
+                        li.innerHTML = `
+                            <span>${name}</span>
+                            <button class="delete-btn text-red-500 hover:text-red-700 text-sm font-medium" data-name="${name}" data-type="secretary">Hapus</button>
+                        `;
+                        adminSecretaryList.appendChild(li);
+                    });
+                }
+            });
+
+            // Tambahkan event listener untuk tombol hapus (menggunakan event delegation)
+            adminStudentList.addEventListener('click', handleAdminDelete);
+            adminTeacherList.addEventListener('click', handleAdminDelete);
+            adminSecretaryList.addEventListener('click', handleAdminDelete);
+        }
+        
+        // Fungsi Tambah Data (Admin)
+        async function addToList(docRef, fieldName, value) {
+            if (!value) return; // Jangan tambah jika kosong
+            try {
+                await updateDoc(docRef, {
+                    [fieldName]: arrayUnion(value)
+                });
+            } catch (error) {
+                // Jika dokumen belum ada, buat baru
+                if (error.code === 'not-found') {
+                    await setDoc(docRef, { [fieldName]: [value] });
+                } else {
+                    console.error("Error menambah data:", error);
+                }
+            }
+        }
+        
+        /**
+         * Menghapus item dari array di Firestore
+         */
+        async function removeFromList(docRef, fieldName, value) {
+            if (!value) return;
+            try {
+                await updateDoc(docRef, {
+                    [fieldName]: arrayRemove(value)
+                });
+                console.log(`Berhasil menghapus ${value} dari ${fieldName}`);
+            } catch (error) {
+                console.error("Error menghapus data:", error);
+                // Kita tidak menggunakan alert, cukup log di konsol
+            }
+        }
+
+        /**
+         * Menangani klik tombol hapus di halaman Admin
+         */
+        async function handleAdminDelete(event) {
+            const target = event.target.closest('.delete-btn');
+            if (!target) return; // Bukan tombol hapus yang diklik
+
+            const name = target.dataset.name;
+            const type = target.dataset.type;
+
+            if (!name || !type) return;
+
+            // Di aplikasi nyata, di sini sebaiknya ada modal konfirmasi.
+            // Karena tidak boleh pakai confirm(), kita langsung hapus.
+            
+            let docRef;
+            const fieldName = 'names';
+
+            switch (type) {
+                case 'student':
+                    docRef = doc(db, 'artifacts', appId, 'public/data/rosters', CLASS_NAME);
+                    break;
+                case 'teacher':
+                    docRef = doc(db, 'artifacts', appId, 'public/data/users', 'teachers');
+                    break;
+                case 'secretary':
+                    docRef = doc(db, 'artifacts', appId, 'public/data/users', 'secretaries');
+                    break;
+                default:
+                    return;
+            }
+            
+            target.disabled = true; // Nonaktifkan tombol
+            target.textContent = "Menghapus...";
+            await removeFromList(docRef, fieldName, name);
+            // Daftar akan otomatis diperbarui oleh onSnapshot
+        }
+        
+        adminAddStudentButton.addEventListener('click', async () => {
+            const name = adminStudentNameInput.value.trim();
+            if(name) {
+                const docRef = doc(db, 'artifacts', appId, 'public/data/rosters', CLASS_NAME);
+                await addToList(docRef, 'names', name);
+                adminStudentNameInput.value = '';
+            }
+        });
+        
+        adminAddTeacherButton.addEventListener('click', async () => {
+            const name = adminTeacherNameInput.value.trim();
+            if(name) {
+                const docRef = doc(db, 'artifacts', appId, 'public/data/users', 'teachers');
+                await addToList(docRef, 'names', name);
+                adminTeacherNameInput.value = '';
+            }
+        });
+        
+        adminAddSecretaryButton.addEventListener('click', async () => {
+            const name = adminSecretaryNameInput.value.trim();
+            if(name) {
+                const docRef = doc(db, 'artifacts', appId, 'public/data/users', 'secretaries');
+                await addToList(docRef, 'names', name);
+                adminSecretaryNameInput.value = '';
+            }
+        });
+
+        // --- Logika Halaman Guru & Sekretaris ---
+
+        function loadTeacherPage(role) {
+            // Sesuaikan UI berdasarkan peran
+            if (role === 'guru') {
+                teacherHeaderTitle.textContent = 'Dashboard Guru (Wali Kelas)';
+                printReportButton.classList.remove('hidden');
+            } else {
+                teacherHeaderTitle.textContent = 'Dashboard Sekretaris Kelas';
+                printReportButton.classList.add('hidden');
+            }
+            
+            waliKelasName.textContent = WALI_KELAS;
+            attendanceDate.value = getTodayDateString(); // Set tanggal hari ini
+            
+            // Muat data absensi untuk tanggal yang dipilih
+            loadAttendanceData(attendanceDate.value);
+            
+            // Tambahkan listener ke date picker
+            attendanceDate.addEventListener('change', () => {
+                loadAttendanceData(attendanceDate.value);
+            });
+            
+            // Listener tombol simpan
+            saveAttendanceButton.addEventListener('click', saveAttendanceData);
+            
+            // Listener tombol print
+            printReportButton.addEventListener('click', printReport);
+        }
+        
+        async function loadAttendanceData(dateString) {
+            // Hentikan listener lama
+            if (attendanceUnsubscribe) {
+                attendanceUnsubscribe();
+            }
+            
+            // 1. Dapatkan daftar siswa
+            const studentRef = doc(db, 'artifacts', appId, 'public/data/rosters', CLASS_NAME);
+            const studentSnap = await getDoc(studentRef);
+            if (!studentSnap.exists()) {
+                attendanceTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Data siswa tidak ditemukan. Harap hubungi Admin.</td></tr>';
+                return;
+            }
+            const studentNames = studentSnap.data().names.sort();
+
+            // 2. Dapatkan data absensi untuk tanggal ini (realtime)
+            const attendanceRef = doc(db, 'artifacts', appId, 'public/data/attendance', `${CLASS_NAME}_${dateString}`);
+            
+            attendanceUnsubscribe = onSnapshot(attendanceRef, (docSnap) => {
+                const records = docSnap.exists() ? docSnap.data().records : {};
+                renderAttendanceTable(studentNames, records);
+            });
+        }
+        
+        function renderAttendanceTable(studentNames, records) {
+            attendanceTableBody.innerHTML = '';
+            studentNames.forEach((name, index) => {
+                const record = records[name] || {};
+                const status = record.status || 'A'; // Default Alfa
+                const timestamp = record.timestamp || 'N/A';
+                
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-student-name', name);
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${index + 1}</td>
+                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">${name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex gap-4">
+                            ${createRadioOption('H', name, status, 'green')}
+                            ${createRadioOption('S', name, status, 'yellow')}
+                            ${createRadioOption('I', name, status, 'blue')}
+                            ${createRadioOption('A', name, status, 'red')}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${timestamp}</td>
+                `;
+                attendanceTableBody.appendChild(tr);
+            });
+        }
+
+        function createRadioOption(value, name, currentStatus, color) {
+            const isChecked = value === currentStatus;
+            return `
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="status-${name}" value="${value}" ${isChecked ? 'checked' : ''} 
+                           class="form-radio h-5 w-5 text-${color}-600 focus:ring-${color}-500 border-gray-300">
+                    <span class="font-medium text-${color}-700">${value}</span>
+                </label>
+            `;
+        }
+        
+        async function saveAttendanceData() {
+            const dateString = attendanceDate.value;
+            if (!dateString) return;
+
+            const attendanceRef = doc(db, 'artifacts', appId, 'public/data/attendance', `${CLASS_NAME}_${dateString}`);
+            
+            // Dapatkan data lama untuk merge
+            const currentSnap = await getDoc(attendanceRef);
+            const currentRecords = currentSnap.exists() ? currentSnap.data().records : {};
+
+            const newRecords = { ...currentRecords }; // Salin data lama
+            
+            // Ambil semua baris dari tabel
+            const rows = attendanceTableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const studentName = row.getAttribute('data-student-name');
+                const selectedStatus = row.querySelector(`input[name="status-${studentName}"]:checked`).value;
+                
+                const oldRecord = currentRecords[studentName] || {};
+                
+                // Jika status berubah, atau jika belum ada record
+                if (!oldRecord.status || oldRecord.status !== selectedStatus) {
+                    newRecords[studentName] = {
+                        status: selectedStatus,
+                        // Hanya update timestamp jika status baru adalah Hadir dan belum ada timestamp,
+                        // atau jika status diubah *menjadi* Hadir.
+                        // Jika diubah oleh guru/sekre, jangan ubah timestamp siswa.
+                        // Aturan baru: Jika diubah oleh Guru/Sek, timestamp-nya adalah 'Diubah Manual'
+                        timestamp: oldRecord.status === 'H' ? oldRecord.timestamp : (selectedStatus === 'H' ? 'Manual: ' + getLocalTimestamp() : 'N/A')
+                    };
+                    
+                    // Jika siswa sudah absen (H) dan diubah ke S/I/A, hapus timestampnya
+                    if(oldRecord.status === 'H' && selectedStatus !== 'H') {
+                         newRecords[studentName].timestamp = 'N/A';
+                    }
+                    // Jika diubah ke Hadir (dari S/I/A), berikan timestamp manual
+                    if(oldRecord.status !== 'H' && selectedStatus === 'H') {
+                         newRecords[studentName].timestamp = 'Manual: ' + getLocalTimestamp().split(',')[1].trim();
+                    }
+                }
+            });
+
+            try {
+                await setDoc(attendanceRef, { 
+                    date: dateString,
+                    records: newRecords 
+                }, { merge: true }); // Gunakan merge agar tidak menimpa data lain
+                
+                alert('Data absensi berhasil disimpan!');
+            } catch (error) {
+                console.error("Error menyimpan absensi:", error);
+                alert('Gagal menyimpan data. Cek konsol.');
+            }
+        }
+        
+        function printReport() {
+            const dateString = attendanceDate.value;
+            const printDateEl = document.getElementById('printDate');
+            const printBody = document.getElementById('attendanceTablePrintBody');
+            const printTimestamp = document.getElementById('printTimestamp');
+            
+            printDateEl.textContent = new Date(dateString + 'T00:00:00').toLocaleDateString('id-ID', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            });
+            printTimestamp.textContent = getLocalTimestamp();
+            printBody.innerHTML = '';
+            
+            let summary = { H: 0, S: 0, I: 0, A: 0, Total: 0 };
+            
+            const rows = attendanceTableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const statusInput = row.querySelector('input:checked');
+                const status = statusInput ? statusInput.value : 'A';
+                
+                const printRow = document.createElement('tr');
+                printRow.innerHTML = `
+                    <td class="px-4 py-2 text-sm border">${cells[0].textContent}</td>
+                    <td class="px-4 py-2 text-sm border">${cells[1].textContent}</td>
+                    <td class="px-4 py-2 text-sm border font-medium">${status}</td>
+                    <td class="px-4 py-2 text-sm border">${cells[3].textContent}</td>
+                `;
+                printBody.appendChild(printRow);
+                
+                summary[status]++;
+                summary.Total++;
+            });
+            
+            // Tambah baris total
+            const totalRow = document.createElement('tr');
+            totalRow.className = "bg-gray-100 font-bold";
+            totalRow.innerHTML = `
+                <td class="px-4 py-2 text-sm border" colspan="2">Total Keseluruhan</td>
+                <td class="px-4 py-2 text-sm border" colspan="2">
+                    Hadir: ${summary.H}, Sakit: ${summary.S}, Izin: ${summary.I}, Alfa: ${summary.A} (Total: ${summary.Total} Siswa)
+                </td>
+            `;
+            printBody.appendChild(totalRow);
+
+            window.print();
+        }
+
+
+        // --- Logika Halaman Siswa ---
+
+        async function loadSiswaPage() {
+            siswaNameDisplay.textContent = currentStudentName;
+            
+            // Tampilkan loading
+            siswaLoading.classList.remove('hidden');
+            siswaAttendButtonContainer.classList.add('hidden');
+            siswaAttendedContainer.classList.add('hidden');
+            
+            const dateString = getTodayDateString();
+            const attendanceRef = doc(db, 'artifacts', appId, 'public/data/attendance', `${CLASS_NAME}_${dateString}`);
+            
+            try {
+                const docSnap = await getDoc(attendanceRef);
+                const records = docSnap.exists() ? docSnap.data().records : {};
+                
+                const myRecord = records[currentStudentName];
+                
+                siswaLoading.classList.add('hidden');
+                
+                if (myRecord && myRecord.status === 'H') {
+                    // Sudah absen Hadir
+                    siswaAttendedContainer.classList.remove('hidden');
+                    siswaTimestampDisplay.textContent = myRecord.timestamp;
+                } else if (myRecord && (myRecord.status === 'S' || myRecord.status === 'I' || myRecord.status === 'A')) {
+                    // Sudah ditandai S/I/A oleh guru
+                    siswaAttendedContainer.classList.remove('hidden');
+                    siswaTimestampDisplay.innerHTML = `Anda tercatat <span class="font-bold text-red-600">${myRecord.status}</span>. Hubungi Wali Kelas jika ada kesalahan.`;
+                } else {
+                    // Belum absen
+                    siswaAttendButtonContainer.classList.remove('hidden');
+                }
+                
+            } catch (error) {
+                console.error("Error cek absensi siswa:", error);
+                siswaLoading.classList.add('hidden');
+                siswaAttendButtonContainer.classList.remove('hidden'); // Tampilkan tombol jika error
+            }
+        }
+        
+        siswaAttendButton.addEventListener('click', async () => {
+            siswaAttendButton.disabled = true;
+            siswaAttendButton.textContent = "MEMPROSES...";
+            
+            const dateString = getTodayDateString();
+            const timestamp = getLocalTimestamp().split(',')[1].trim(); // Ambil waktunya saja
+            
+            const attendanceRef = doc(db, 'artifacts', appId, 'public/data/attendance', `${CLASS_NAME}_${dateString}`);
+
+            const newRecord = {
+                status: 'H',
+                timestamp: timestamp
+            };
+            
+            try {
+                // Gunakan setDoc dengan merge untuk hanya mengupdate data siswa ini
+                await setDoc(attendanceRef, {
+                    date: dateString,
+                    records: {
+                        [currentStudentName]: newRecord
+                    }
+                }, { merge: true }); // Merge sangat penting di sini!
+                
+                // Berhasil
+                loadSiswaPage(); // Muat ulang halaman untuk menampilkan status "sudah absen"
+                
+            } catch (error) {
+                console.error("Error saat absen:", error);
+                alert('Gagal melakukan absensi. Coba lagi.');
+                siswaAttendButton.disabled = false;
+                siswaAttendButton.textContent = "KLIK UNTUK HADIR";
+            }
+        });
+
+
+        // --- Inisialisasi Aplikasi ---
+        
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            setLogLevel('Debug');
+
+            // Autentikasi pengguna
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    console.log("User terautentikasi (uid):", user.uid);
+                    userId = user.uid;
+                    // Setelah auth siap, muat daftar siswa awal untuk halaman login
+                    const studentRef = doc(db, 'artifacts', appId, 'public/data/rosters', CLASS_NAME);
+                    const studentSnap = await getDoc(studentRef);
+                    if (studentSnap.exists()) {
+                        populateStudentLoginSelect(studentSnap.data().names);
+                    } else {
+                        // Jika belum ada, gunakan daftar hardcoded dan seed
+                        populateStudentLoginSelect(INITIAL_STUDENT_LIST_XC);
+                        await seedInitialData(); // Lakukan seeding jika data siswa belum ada
+                    }
+                } else {
+                    console.log("User tidak terautentikasi, mencoba login...");
+                    try {
+                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        if (token) {
+                            await signInWithCustomToken(auth, token);
+                            console.log("Berhasil login dengan Custom Token.");
+                        } else {
+                            await signInAnonymously(auth);
+                            console.log("Berhasil login secara anonim.");
+                        }
+                    } catch (authError) {
+                        console.error("Gagal melakukan autentikasi:", authError);
+                        document.body.innerHTML = "<p>Gagal terhubung ke layanan. Coba muat ulang.</p>";
+                    }
+                }
+            });
+
+        } catch (e) {
+            console.error("Gagal menginisialisasi Firebase:", e);
+            document.body.innerHTML = "<p>Error konfigurasi. Aplikasi tidak dapat dimuat.</p>";
+        }
+
+    </script>
+</body>
+</html>
